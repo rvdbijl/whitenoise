@@ -62,6 +62,14 @@ void audio_callback(snd_pcm_t* handle) {
     }
 }
 
+void noise_generator() {
+    while (keep_running.load()) {
+        generate_white_noise(ring_buffer, BUFFER_SIZE);
+        write_pos = (write_pos + BUFFER_SIZE) % ring_buffer.size();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
 int main() {
     snd_pcm_t *handle;
     int err;
@@ -89,6 +97,7 @@ int main() {
     std::srand(std::time(nullptr));
 
     std::thread audio_thread(audio_callback, handle);
+    std::thread generator_thread(noise_generator);
 
     // Set real-time priority for the audio thread
     sched_param sch_params;
@@ -97,14 +106,11 @@ int main() {
 
     std::cout << "Playing white noise. Press Enter to stop." << std::endl;
 
-    while (keep_running.load()) {
-        generate_white_noise(ring_buffer, BUFFER_SIZE);
-        write_pos = (write_pos + BUFFER_SIZE) % ring_buffer.size();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    std::cin.get(); // Wait for Enter key press
 
     keep_running.store(false);
     audio_thread.join();
+    generator_thread.join();
 
     snd_pcm_close(handle);
     return 0;
