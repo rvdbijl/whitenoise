@@ -26,13 +26,18 @@ int main() {
     snd_pcm_hw_params_set_channels(handle, params, CHANNELS);
     unsigned int rate = SAMPLE_RATE;
     snd_pcm_hw_params_set_rate_near(handle, params, &rate, 0);
+    snd_pcm_uframes_t period_size = 4096;
+    int dir = 0;
+    snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, &dir);
+    snd_pcm_uframes_t buffer_size_f = 16384;
+    snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size_f);
     snd_pcm_hw_params(handle, params);
 
     // Seed random number generator
     std::srand(std::time(nullptr));
 
     // Buffer to hold audio data
-    const int buffer_size = 1024;
+    const int buffer_size = 4096;
     int16_t buffer[buffer_size];
 
     std::cout << "Playing white noise. Press Ctrl+C to stop." << std::endl;
